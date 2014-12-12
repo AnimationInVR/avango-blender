@@ -6,6 +6,8 @@ from . import field_container
 
 # TODO: 
 # write parent
+def matrixToList(matrix):
+    return sum(list( list(x) for x in matrix), [])
 
 def avangoNodeTrees():
     return (x for x in bpy.data.node_groups if
@@ -63,12 +65,15 @@ def to_json(obj):
                 'type' : 'Viewer',
                 'window' : window,
                 'scenegraph' : scenegraph,
+                'left_screen_path' : obj.left_screen_path,
                 'camera' : camera
         }
     if isinstance(obj, field_container.Camera):
         parent = 'null'
         if obj.referenced_object in bpy.data.objects:
-          parent = bpy.data.objects[obj.referenced_object].parent
+          if bpy.data.objects[obj.referenced_object].parent:
+            parent = bpy.data.objects[obj.referenced_object].parent.name
+          matrix = bpy.data.objects[obj.referenced_object].matrix_local
 
         return {
                 'type' : 'Camera',
@@ -76,7 +81,8 @@ def to_json(obj):
                 'scenegraph' : obj.scenegraph,
                 'output_window_name' : obj.output_window_name,
                 'resolution' : [ obj.resolution[0], obj.resolution[1] ],
-                'parent' : parent.name
+                'transform' : matrixToList(matrix),
+                'parent' : parent
         }
     if isinstance(obj, field_container.Light):
         name = obj.name
@@ -95,17 +101,20 @@ def to_json(obj):
 
         parent = 'null'
         if obj.referenced_object in bpy.data.objects:
-          parent = bpy.data.objects[obj.referenced_object].parent
+          if bpy.data.objects[obj.referenced_object].parent:
+            parent = bpy.data.objects[obj.referenced_object].parent.name
+          matrix = bpy.data.objects[obj.referenced_object].matrix_local
 
         if lamp is not None:
             return  {
-                      'name' : obj.name,
-                      'type' : ty,
-                      'color' : [ lamp.color.r, lamp.color.g, lamp.color.b],
-                      'distance' : lamp.distance,
-                      'parent' : parent.name,
-                      'energy' : lamp.energy
-                    }
+                'name' : obj.name,
+                'type' : ty,
+                'color' : [ lamp.color.r, lamp.color.g, lamp.color.b],
+                'distance' : lamp.distance,
+                'parent' : parent,
+                'transform' : matrixToList(matrix),
+                'energy' : lamp.energy
+                }
         else:
             return  {
                       'name' : obj.name,
@@ -113,31 +122,41 @@ def to_json(obj):
                     }
 
     if isinstance(obj, field_container.Mesh):
-
         parent = 'null'
         if obj.referenced_object in bpy.data.objects:
-          parent = bpy.data.objects[obj.referenced_object].parent
+          if bpy.data.objects[obj.referenced_object].parent:
+            parent = bpy.data.objects[obj.referenced_object].parent.name
+          matrix = bpy.data.objects[obj.referenced_object].matrix_local
         return {
                 'type' : 'Mesh',
-                'parent' : parent.name,
-                'name' : obj.name
+                'name' : obj.name,
+                'parent' : parent,
+                'transform' : matrixToList(matrix)
         }
     if isinstance(obj, field_container.Screen):
         parent = 'null'
+        matrix = []
         if obj.referenced_object in bpy.data.objects:
-          parent = bpy.data.objects[obj.referenced_object].parent
+          if bpy.data.objects[obj.referenced_object].parent:
+            parent = bpy.data.objects[obj.referenced_object].parent.name
+          matrix = bpy.data.objects[obj.referenced_object].matrix_local
+
         return {
                 'type' : 'Screen',
-                'parent' : parent.name,
-                'name' : obj.name
+                'name' : obj.name,
+                'parent' : parent,
+                'transform' : matrixToList(matrix)
         }
     if isinstance(obj, field_container.Transform):
         parent = 'null'
         if obj.referenced_object in bpy.data.objects:
-          parent = bpy.data.objects[obj.referenced_object].parent
+          if bpy.data.objects[obj.referenced_object].parent:
+            parent = bpy.data.objects[obj.referenced_object].parent.name
+          matrix = bpy.data.objects[obj.referenced_object].matrix_local
         return {
                 'type' : 'Transform',
-                'parent' : parent.name,
+                'parent' : parent,
+                'transform' : matrixToList(matrix),
                 'name' : obj.name
         }
 

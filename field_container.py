@@ -43,6 +43,11 @@ class Camera(Node, node_tree.AvangoCustomTreeNode):
             size=2
             )
 
+    left_screen_path = StringProperty(
+            description='path to screen node used for the left eye',
+            default='/Screen'
+            )
+
     def init(self, context):
 
         bpy.ops.object.camera_add()
@@ -60,6 +65,7 @@ class Camera(Node, node_tree.AvangoCustomTreeNode):
         col.prop(self, 'scenegraph', text='SceneGraph')
         col.prop(self, 'output_window_name', text='OutputWindowName')
         col.prop(self, 'resolution', text='Resolution')
+        col.prop(self, 'left_screen_path', text='LeftScreenPath')
         col.label(text='Camera: '+self.referenced_object, icon='CAMERA_DATA')
         # browse cameras
         #col.prop_search(self, 'referenced_object', bpy.data, 'cameras',
@@ -75,11 +81,31 @@ class Screen(Node, node_tree.AvangoCustomTreeNode):
     bl_idname = 'Screen'
     bl_label = 'Screen'
 
+    def update_name(self, context):
+        if self.referenced_object in bpy.data.objects:
+            bpy.data.objects[self.referenced_object].name = self.name
+            self.referenced_object = self.name
+        else:
+            print("Error: failed referenced_object")
+
     width = FloatProperty(default=2, step=0.001, min=0.01)
-    height = FloatProperty(default=1.5, step=0.001, min=0.01)
+
+    height = FloatProperty(
+            default=1.5, step=0.001, min=0.01)
+
+    referenced_object = StringProperty(
+            default='',
+            description='name of referenced blender object'
+            )
+
+    name = StringProperty(description='name', update=update_name)
 
     def init(self, context):
-        pass
+        bpy.ops.object.empty_add(type='PLAIN_AXES')
+        obj = bpy.context.object
+        self.referenced_object = obj.name
+        self.name = obj.name
+        obj["avango_nodes"] = self.name
 
     def draw_buttons(self, context, layout):
         scene = context.scene
@@ -104,7 +130,7 @@ class Light(Node, node_tree.AvangoCustomTreeNode):
             bpy.data.objects[self.referenced_object].name = self.name
             self.referenced_object = self.name
         else:
-            print("Error: failed update_linked_lamp_name")
+            print("Error: failed referenced_object")
 
     name = StringProperty(description='name', update=update_name)
 
@@ -167,12 +193,12 @@ class Mesh(Node, node_tree.AvangoCustomTreeNode):
         col.prop_search(self, 'referenced_object', bpy.data, 'meshes',
                 text='', icon='MESH_DATA')
 
-    # a blender mesh is telling us, that it will no longer link to this mesh
-    def unregister(blender_mesh):
-      if blender_mesh.name == self.referenced_object:
-          self.referenced_object = ""
-      # else:
-      #   ignore event
+#    # a blender mesh is telling us, that it will no longer link to this mesh
+#    def unregister(self, blender_mesh):
+#      if blender_mesh.name == self.referenced_object:
+#          self.referenced_object = ""
+#      # else:
+#      #   ignore event
 
     def process(self):
         pass
