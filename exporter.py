@@ -3,6 +3,7 @@ from bpy_extras.io_utils import ExportHelper
 import os
 import json
 from . import field_container
+from mathutils import Matrix
 
 # TODO: 
 # write parent
@@ -65,7 +66,6 @@ def to_json(obj):
                 'type' : 'Viewer',
                 'window' : window,
                 'scenegraph' : scenegraph,
-                'left_screen_path' : obj.left_screen_path,
                 'camera' : camera
         }
     if isinstance(obj, field_container.Camera):
@@ -80,6 +80,7 @@ def to_json(obj):
                 'name' : obj.name,
                 'scenegraph' : obj.scenegraph,
                 'output_window_name' : obj.output_window_name,
+                'left_screen_path' : obj.left_screen_path,
                 'resolution' : [ obj.resolution[0], obj.resolution[1] ],
                 'transform' : matrixToList(matrix),
                 'parent' : parent
@@ -123,13 +124,40 @@ def to_json(obj):
 
     if isinstance(obj, field_container.Mesh):
         parent = 'null'
+        blender_obj = None
         if obj.referenced_object in bpy.data.objects:
-          if bpy.data.objects[obj.referenced_object].parent:
-            parent = bpy.data.objects[obj.referenced_object].parent.name
-          matrix = bpy.data.objects[obj.referenced_object].matrix_local
+          blender_obj = bpy.data.objects[obj.referenced_object]
+          if blender_obj.parent:
+            parent = blender_obj.parent.name
+          matrix = blender_obj.matrix_local
+        filename = obj.name + '.obj'
+        if (obj.is_animation_hack):
+          filename = obj.name + '.md5mesh'
+        else:
+          bpy.ops.object.select_all(action='DESELECT')
+#          scene.objects.active = blender_obj
+          blender_obj.select = True
+          world = blender_obj.matrix_world.copy()
+          Matrix.identity(blender_obj.matrix_world)
+          bpy.ops.export_scene.obj(
+              filepath='/tmp/'+filename,
+              check_existing=False,
+              use_selection=True,
+              use_normals=True,
+              use_triangles=True,
+              use_uvs=True,
+              use_materials=True,
+              axis_forward='-Z',
+              axis_up='Y',
+              path_mode='AUTO'
+              )
+          blender_obj.matrix_world = world
+          blender_obj.select = False
+
         return {
                 'type' : 'Mesh',
                 'name' : obj.name,
+                'file' : filename,
                 'parent' : parent,
                 'transform' : matrixToList(matrix)
         }

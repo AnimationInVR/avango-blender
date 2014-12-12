@@ -183,6 +183,11 @@ class Mesh(Node, node_tree.AvangoCustomTreeNode):
             #update= todo when update , add my name to blender object
             )
 
+    is_animation_hack = BoolProperty(
+            description='is this an animation',
+            default=False
+            )
+
     def init(self, context):
         pass
 
@@ -192,6 +197,7 @@ class Mesh(Node, node_tree.AvangoCustomTreeNode):
         col.prop(self, 'name', text='Name')
         col.prop_search(self, 'referenced_object', bpy.data, 'meshes',
                 text='', icon='MESH_DATA')
+        col.prop(self, 'is_animation_hack', text='is animation')
 
 #    # a blender mesh is telling us, that it will no longer link to this mesh
 #    def unregister(self, blender_mesh):
@@ -273,13 +279,25 @@ class Transform(Node, node_tree.AvangoCustomTreeNode):
     bl_idname = 'Transform'
     bl_label = 'Transform'
 
+    def update_name(self, context):
+        if self.referenced_object in bpy.data.objects:
+            bpy.data.objects[self.referenced_object].name = self.name
+            self.referenced_object = self.name
+        else:
+            print("Error: failed referenced_object")
+
+    name = StringProperty(description='name', update=update_name)
+
     referenced_object = StringProperty(default='transform',
             description='identifies this FieldContainer')
 
     def init(self, context):
         bpy.ops.object.empty_add(type='PLAIN_AXES')
+        obj = bpy.context.object
 #        bpy.context.object.name = 'transform'
         # self.inputs.new('MatrixSocketType', 'Transform')
+        self.referenced_object = obj.name
+        self.name = obj.name
 
     def draw_buttons(self, context, layout):
         col = layout.column()
