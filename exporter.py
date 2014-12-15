@@ -5,6 +5,7 @@ import json
 from . import field_container
 from mathutils import Matrix
 
+
 # TODO: 
 # write parent
 def matrixToList(matrix):
@@ -134,25 +135,36 @@ def to_json(obj):
         if (obj.is_animation_hack):
           filename = obj.name + '.md5mesh'
         else:
-          bpy.ops.object.select_all(action='DESELECT')
-#          scene.objects.active = blender_obj
-          blender_obj.select = True
-          world = blender_obj.matrix_world.copy()
-          Matrix.identity(blender_obj.matrix_world)
-          bpy.ops.export_scene.obj(
-              filepath='/tmp/'+filename,
-              check_existing=False,
-              use_selection=True,
-              use_normals=True,
-              use_triangles=True,
-              use_uvs=True,
-              use_materials=True,
-              axis_forward='-Z',
-              axis_up='Y',
-              path_mode='AUTO'
-              )
-          blender_obj.matrix_world = world
-          blender_obj.select = False
+          splittedPath = filepath.split('/')
+          path = ''
+          for x in range(0, len(splittedPath)-1):
+              path += '/' + splittedPath[x]
+
+          if not os.path.exists(path + '/tmp'):
+              os.makedirs(path + '/tmp')
+
+          path += bpy.path.abspath('/tmp/')
+          bpy.ops.object.select_all(action='DESELECT')   
+          for ob in scene.objects:
+              # make the current object active and select it
+              scene.objects.active = ob
+              ob.select = True
+
+              # make sure that we only export meshes
+              if ob.type == 'MESH':
+                  # export the currently selected object to its own file based on its name
+                  bpy.ops.export_scene.obj(filepath=str(path + ob.name + '.obj'), 
+                      check_existing=False,
+                      use_selection=True,
+                      use_normals=True,
+                      use_uvs=True,
+                      use_materials=True,
+                      axis_forward='-Z',
+                      axis_up='Y',
+                      path_mode='AUTO'
+                      )
+              # deselect the object and move on to another if any more are left 
+              ob.select = False
 
         return {
                 'type' : 'Mesh',
@@ -187,6 +199,9 @@ def to_json(obj):
                 'transform' : matrixToList(matrix),
                 'name' : obj.name
         }
+
+    
+                
 
     raise TypeError(repr(obj) + ' is not JSON serializable')
 
@@ -228,10 +243,25 @@ def save(operator, context):
       'lights'      : dict((x.name,x) for x in ns if (x.bl_label == 'Light')),
       'meshes'      : dict((x.name,x) for x in ns if (x.bl_label == 'Mesh')),
       'screens'  : dict((x.name,x) for x in ns if (x.bl_label == 'Screen')),
-      'transforms'  : dict((x.name,x) for x in ns if (x.bl_label == 'Transform'))
+      'transforms'  : dict((x.name,x) for x in ns if (x.bl_label == 'Transform')),
+      'enable_preview_display'            : str(context.scene.enable_preview_display).lower(),
+      'enable_fps_display'            : str(context.scene.enable_fps_display).lower(),
+      'enable_ray_display'            : str(context.scene.enable_ray_display).lower(),
+      'enable_bbox_display'            : str(context.scene.enable_bbox_display).lower(),
+      'enable_FXAA'            : str(context.scene.enable_FXAA).lower(),
+      'enable_frustum_culling'            : str(context.scene.enable_frustum_culling).lower(),
+      'enable_backface_culling'            : str(context.scene.enable_backface_culling).lower(),
+      'near_clip'         : context.scene.near_clip,
+      'far_clip'      : context.scene.far_clip
       }
 
-    with open('/tmp/blabla.json', 'w', encoding='utf-8') as f:
+    global filepath 
+    filepath = operator.filepath
+
+    global scene
+    scene = context.scene
+
+    with open(operator.filepath, 'w', encoding='utf-8') as f:
         json.dump(document, f, default=to_json, indent=4)
     return {'FINISHED'}
 

@@ -13,10 +13,14 @@ bl_info = {
 
 if "bpy" in locals():
     import imp
+    imp.reload(properties)
+    imp.reload(interface)
     imp.reload(node_tree)
     imp.reload(field_container)
     imp.reload(exporter)
 else:
+    from . import properties
+    from . import interface
     from . import node_tree
     from . import field_container
     from . import exporter
@@ -48,6 +52,8 @@ node_categories = [
   ]
 
 def register():
+    properties.register()
+    interface.register()
     node_tree.register()
     field_container.register()
     exporter.register()
@@ -67,6 +73,8 @@ def register():
         nu.register_node_categories('AVANGO_NODES', node_categories)
 
 def unregister():
+    properties.unregister() 
+    interface.unregister() 
     node_tree.unregister()
     field_container.unregister()
     exporter.unregister()
