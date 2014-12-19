@@ -137,39 +137,40 @@ def to_json(obj):
         else:
           splittedPath = filepath.split('/')
           path = ''
-          for x in range(0, len(splittedPath)-1):
+
+          for x in range(1, len(splittedPath)-1):
               path += '/' + splittedPath[x]
 
           if not os.path.exists(path + '/tmp'):
               os.makedirs(path + '/tmp')
 
           path += bpy.path.abspath('/tmp/')
-          bpy.ops.object.select_all(action='DESELECT')   
-          for ob in scene.objects:
-              # make the current object active and select it
-              scene.objects.active = ob
-              ob.select = True
 
-              # make sure that we only export meshes
-              if ob.type == 'MESH':
-                  # export the currently selected object to its own file based on its name
-                  bpy.ops.export_scene.obj(filepath=str(path + ob.name + '.obj'), 
-                      check_existing=False,
-                      use_selection=True,
-                      use_normals=True,
-                      use_uvs=True,
-                      use_materials=True,
-                      axis_forward='-Z',
-                      axis_up='Y',
-                      path_mode='AUTO'
-                      )
-              # deselect the object and move on to another if any more are left 
-              ob.select = False
+          bpy.ops.object.select_all(action='DESELECT')
+          # scene.objects.active = blender_obj
+          blender_obj.select = True
+          world = blender_obj.matrix_world.copy()
+          Matrix.identity(blender_obj.matrix_world)
+
+          bpy.ops.export_scene.obj(
+              filepath= path + filename,
+              check_existing=False,
+              use_selection=True,
+              use_normals=True,
+              use_triangles=True,
+              use_uvs=True,
+              use_materials=True,
+              axis_forward='Y',
+              axis_up='Z',
+              path_mode='AUTO'
+              )
+          blender_obj.matrix_world = world
+          blender_obj.select = False
 
         return {
                 'type' : 'Mesh',
                 'name' : obj.name,
-                'file' : filename,
+                'file' : 'tmp/' + filename,
                 'parent' : parent,
                 'transform' : matrixToList(matrix)
         }
