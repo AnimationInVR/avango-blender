@@ -97,6 +97,14 @@ def to_json(obj):
         ty = 'null'
         if lamp.type == 'POINT':
             ty = 'PointLight'
+        if lamp.type == 'SUN':
+            ty = 'SunLight'
+        if lamp.type == 'SPOT':
+            ty = 'SpotLight'
+        if lamp.type == 'HEMI':
+            ty = 'HemiLight'
+        if lamp.type == 'AREA':
+            ty = 'AreaLight'
 #     print(" Location: ", o.location) # light radius
 #     print(" Scale: ", o.scale) # light radius
 #     print(" Rotation Quaternion: ", o.rotation_quaternion) # light radius

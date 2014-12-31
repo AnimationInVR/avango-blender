@@ -49,14 +49,7 @@ class Camera(Node, node_tree.AvangoCustomTreeNode):
             )
 
     def init(self, context):
-
-        bpy.ops.object.camera_add()
-        obj = bpy.context.object
-        self.referenced_object = obj.name
-        self.name = obj.name
-        obj["avango_nodes"] = self.name
-
-        self.outputs.new('CameraSocketType', 'Camera')
+        pass
 
     def draw_buttons(self, context, layout):
         scene = context.scene
@@ -68,8 +61,8 @@ class Camera(Node, node_tree.AvangoCustomTreeNode):
         col.prop(self, 'left_screen_path', text='LeftScreenPath')
         col.label(text='Camera: '+self.referenced_object, icon='CAMERA_DATA')
         # browse cameras
-        #col.prop_search(self, 'referenced_object', bpy.data, 'cameras',
-        #        text='', icon='CAMERA_DATA')
+        col.prop_search(self, 'referenced_object', bpy.data, 'cameras',
+                text='', icon='CAMERA_DATA')
 
     def process(self):
         pass
@@ -142,21 +135,15 @@ class Light(Node, node_tree.AvangoCustomTreeNode):
             #update= todo when update , add my name to blender object
 
     def init(self, context):
-        bpy.ops.object.lamp_add(type='POINT')
-        obj = bpy.context.object
-        self.referenced_object = obj.name
-        self.name = obj.name
-        obj["avango_nodes"] = self.name
+        pass
 
     def draw_buttons(self, context, layout):
         scene = context.scene
         col = layout.column()
         col.prop(self, 'name', text='Name')
-        #if referenced_object == '':
-        #    col.prop(self, ...oplus, button new light
-        # browse lights
-        #col.prop_search(self, 'referenced_object', bpy.data, 'lamps',
-        #        text='', icon='LAMP_DATA')
+        
+        col.prop_search(self, 'referenced_object', bpy.data, 'lamps',
+                text='', icon='LAMP_DATA')
         col.label(text='Light: '+self.referenced_object, icon='LAMP_DATA')
 
     def free(self):
